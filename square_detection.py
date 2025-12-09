@@ -3,7 +3,7 @@ import numpy as np
 
 # Using "0" instead of a file name will use the webcam feed
 # In the future replace this with the source to the ESP32 web server
-video_capture = cv2.VideoCapture(0)
+video_capture = cv2.VideoCapture("cardboard.jpg")
 
 # These are random values for now
 lower_bound = np.array([10, 100, 20])
@@ -31,9 +31,15 @@ while True:
     hsvFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
     # Create the mask which takes in the frame and uses the lower and upper bounds defined earlier
-    # # as the color range
+    # as the color range
     mask = cv2.inRange(hsvFrame, lower_bound, upper_bound)
 
+    # This creates the contours with the mask we defined earlier. The parameter cv2.RETR_TREE is the contour 
+    # retrieval mode, and the cv2.CHAIN_APPROX_NONE parameter is the contour approximation method, and we 
+    # select none since we want to display all contours
+    # More in depth explanations of hierarchy and contour retrieval modes can be found here:
+    # https://docs.opencv.org/4.x/d9/d8b/tutorial_py_contours_hierarchy.html
+    # https://docs.opencv.org/3.4/d4/d73/tutorial_py_contours_begin.html
     contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
     cv2.drawContours(frame, contours, -1, (0, 255, 0), 1)
@@ -42,7 +48,7 @@ while True:
     cv2.imshow("Webcam Feed", frame)
 
     # If the key pressed by the user is q, break out of the loop
-    if cv2.waitKey(1) == ord('q'):
+    if cv2.waitKey() == ord('q'):
         break
 
 # These two lines of code will release the video capture object and close all of the
