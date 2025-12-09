@@ -3,11 +3,19 @@ import numpy as np
 
 # Using "0" instead of a file name will use the webcam feed
 # In the future replace this with the source to the ESP32 web server
-video_capture = cv2.VideoCapture("cardboard.jpg")
+video_capture = cv2.VideoCapture(0)
 
 # These are random values for now
-lower_bound = np.array([10, 100, 20])
-upper_bound = np.array([20, 255, 200])
+lower_bound = np.array([5, 60, 180])
+upper_bound = np.array([25, 200, 250])
+
+def BGR_TO_HSV(color):
+    hsv = cv2.cvtColor(color, cv2.COLOR_BGR2HSV)
+    return hsv
+
+thing = BGR_TO_HSV(np.uint8([[[114, 158, 199]]]))
+
+print(thing)
 
 # Throw an error and exit if the video file cannot be opened (not applicable in this case)
 if not video_capture.isOpened():
@@ -42,13 +50,14 @@ while True:
     # https://docs.opencv.org/3.4/d4/d73/tutorial_py_contours_begin.html
     contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
+
     cv2.drawContours(frame, contours, -1, (0, 255, 0), 1)
 
     # Show the webcam feed
     cv2.imshow("Webcam Feed", frame)
 
     # If the key pressed by the user is q, break out of the loop
-    if cv2.waitKey() == ord('q'):
+    if cv2.waitKey(1) == ord('q'):
         break
 
 # These two lines of code will release the video capture object and close all of the
