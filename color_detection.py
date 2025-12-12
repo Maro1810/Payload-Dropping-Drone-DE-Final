@@ -3,7 +3,7 @@ import numpy as np
 
 # Using "0" instead of a file name will use the webcam feed
 # In the future replace this with the source to the ESP32 web server
-video_capture = cv2.VideoCapture(0)
+video_capture = cv2.VideoCapture("http://192.168.68.55")
 
 # These are random values for now
 lower_bound = np.array([10, 60, 90])
