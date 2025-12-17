@@ -98,7 +98,12 @@ while True:
             cx = int(M['m10']/M['m00'])
             cy = int(M['m01']/M['m00'])
 
-            # cv2.circle(frame, (cx, cy), 3, (255, 0, 255), 3)
+            cv2.circle(frame, (cx, cy), 3, (255, 0, 255), 3)
+
+    height, width = FRAME_SIZE(frame)
+
+    cv2.rectangle(frame, (int((width/2)-20), int((height/2)-20)), 
+                  (int((width/2)+20), int((height/2)+20)), (0, 255, 0), 3)
 
     # Show the webcam feed
     cv2.imshow("Webcam Feed", frame)
