@@ -20,7 +20,7 @@ while True:
     # TODO add comments to explain thresholding
     gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    _, thresh_frame = cv2.threshold(gray_frame, 240, 255, cv2.THRESH_BINARY)
+    _, thresh_frame = cv2.threshold(gray_frame, 150, 255, cv2.THRESH_BINARY)
 
     contours, hierarchy = cv2.findContours(thresh_frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -52,10 +52,10 @@ while True:
         # xContour = contour[0][0][0]
         # yContour = contour[0][0][1]
 
-        if (len(approx) == 4 and inRange(x, xApprox, 10) and inRange(y, yApprox, 10) and (h > 10 and w > 10)):
-            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        # if w > 50 and h > 50:
+        # if (len(approx) == 4 and inRange(x, xApprox, 10) and inRange(y, yApprox, 10) and (h > 10 and w > 10)):
         #     cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        if len(approx) == 4 and w > 10 and h > 10:
+            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
 
         # cv2.drawContours(frame, approx, -1, (0, 255, 0), 5)
 

@@ -5,19 +5,27 @@ import numpy as np
 # In the future replace this with the source to the ESP32 web server
 video_capture = cv2.VideoCapture(0)
 
-# These are random values for now
-lower_bound = np.array([10, 60, 90])
-upper_bound = np.array([100, 230, 250])
+# These are random values for now 
+red_lower_bound = np.array([160, 120, 160])
+red_upper_bound = np.array([180, 255, 255])
+
+# Tune these upper and lower bounds for the green color
+green_lower_bound = np.array([35, 40, 40])
+green_upper_bound = np.array([85, 255, 255])
 
 def BGR_TO_HSV(color):
     hsv = cv2.cvtColor(color, cv2.COLOR_BGR2HSV)
     return hsv
 
-thing = BGR_TO_HSV(np.uint8([[[114, 158, 199]]]))
+def FRAME_SIZE(frame):
+    height, width, _ = frame.shape
+    
+    return height, width
 
-print(thing)
+thing = BGR_TO_HSV(np.uint8([[[56, 25, 188]]]))
 
-print(BGR_TO_HSV(np.uint8([[[97, 101, 14]]])))
+red_contour_list = []
+green_contour_list = []
 
 # Throw an error and exit if the video file cannot be opened (not applicable in this case)
 if not video_capture.isOpened():
@@ -42,17 +50,22 @@ while True:
 
     # Create the mask which takes in the frame and uses the lower and upper bounds defined earlier
     # as the color range
-    mask = cv2.inRange(hsvFrame, lower_bound, upper_bound)
+    red_mask = cv2.inRange(hsvFrame, red_lower_bound, red_upper_bound)
+
+    green_mask = cv2.inRange(hsvFrame, green_lower_bound, green_upper_bound)
 
     # These two lines of code will dilate the contours that are found in the picture, which can help
     # eliminate noise
     kernel = np.ones((4, 4), "uint8")
 
-    mask = cv2.dilate(mask, kernel)
+    red_mask = cv2.dilate(red_mask, kernel)
+    
+    green_mask = cv2.dilate(green_mask, kernel)
     
     # Using cv2.bitwise_and() we can modify the frame so that it only displays the parts of the frame
     # that match the desired color
-    blackout = cv2.bitwise_and(hsvFrame, hsvFrame, mask = mask)
+    blackout = cv2.bitwise_and(hsvFrame, hsvFrame, mask = red_mask)
+    blackout2 = cv2.bitwise_and(hsvFrame, hsvFrame, mask = green_mask)
 
     # This creates the contours with the mask we defined earlier. The parameter cv2.RETR_TREE is the contour 
     # retrieval mode, and the cv2.CHAIN_APPROX_NONE parameter is the contour approximation method, and we 
@@ -60,16 +73,39 @@ while True:
     # More in depth explanations of hierarchy and contour retrieval modes can be found here:
     # https://docs.opencv.org/4.x/d9/d8b/tutorial_py_contours_hierarchy.html
     # https://docs.opencv.org/3.4/d4/d73/tutorial_py_contours_begin.html
-    contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    red_contours, _ = cv2.findContours(red_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    
+    green_contours, __ = cv2.findContours(green_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
+    for i, contour in enumerate(red_contours):
+        if cv2.contourArea(contour) > 10000:
+            cv2.drawContours(frame, contour, -1, (0, 255, 0), 3)
+            M = cv2.moments(contour)
+            
+            # Calculate the center of the contour, where m00 represents the area, and m10 and m01
+            # are the weighted sums of the x and y values
+            cx = int(M['m10']/M['m00'])
+            cy = int(M['m01']/M['m00'])
 
-    cv2.drawContours(frame, contours, -1, (0, 255, 0), 1)
+            cv2.circle(frame, (cx, cy), 3, (0, 255, 255), 3)
+
+    for i, contour in enumerate(green_contours):
+        if cv2.contourArea(contour) > 10000:
+            cv2.drawContours(frame, contour, -1, (0, 255, 0), 3)
+
+            M = cv2.moments(contour)
+
+            cx = int(M['m10']/M['m00'])
+            cy = int(M['m01']/M['m00'])
+
+            # cv2.circle(frame, (cx, cy), 3, (255, 0, 255), 3)
 
     # Show the webcam feed
     cv2.imshow("Webcam Feed", frame)
 
     # Shows the same feed but filters out anything that doesn't match the color
-    cv2.imshow("Mask", blackout)
+    cv2.imshow("Red Mask", blackout)
+    cv2.imshow("Green Mask", blackout2)
     
 
     # If the key pressed by the user is q, break out of the loop
