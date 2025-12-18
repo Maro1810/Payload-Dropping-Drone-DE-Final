@@ -22,10 +22,14 @@ def FRAME_SIZE(frame):
     
     return height, width
 
-thing = BGR_TO_HSV(np.uint8([[[56, 25, 188]]]))
+red_center_x = 0
+red_center_y = 0
 
-red_contour_list = []
-green_contour_list = []
+green_center_x = 0
+green_center_y = 0
+
+x_aligned = False
+y_aligned = False
 
 # Throw an error and exit if the video file cannot be opened (not applicable in this case)
 if not video_capture.isOpened():
@@ -77,33 +81,55 @@ while True:
     
     green_contours, __ = cv2.findContours(green_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
+    red_contour = None
+
+    green_contour = None
+
     for i, contour in enumerate(red_contours):
-        if cv2.contourArea(contour) > 10000:
-            cv2.drawContours(frame, contour, -1, (0, 255, 0), 3)
+        if cv2.contourArea(contour) > 6000:
+            # cv2.drawContours(frame, contour, -1, (0, 255, 0), 3)
             M = cv2.moments(contour)
+
+            red_contour = contour
             
             # Calculate the center of the contour, where m00 represents the area, and m10 and m01
             # are the weighted sums of the x and y values
-            cx = int(M['m10']/M['m00'])
-            cy = int(M['m01']/M['m00'])
+            red_center_x = int(M['m10']/M['m00'])
+            red_center_y = int(M['m01']/M['m00'])
 
-            cv2.circle(frame, (cx, cy), 3, (0, 255, 255), 3)
+            cv2.circle(frame, (red_center_x, red_center_y), 3, (0, 255, 255), 3)
 
     for i, contour in enumerate(green_contours):
-        if cv2.contourArea(contour) > 10000:
+        if cv2.contourArea(contour) > 6000:
             cv2.drawContours(frame, contour, -1, (0, 255, 0), 3)
 
-            M = cv2.moments(contour)
+            green_contour = contour
 
-            cx = int(M['m10']/M['m00'])
-            cy = int(M['m01']/M['m00'])
+            # M = cv2.moments(contour)
 
-            cv2.circle(frame, (cx, cy), 3, (255, 0, 255), 3)
+            # red_center_x2 = int(M['m10']/M['m00'])
+            # red_center_y2 = int(M['m01']/M['m00'])
+
+            # cv2.circle(frame, (red_center_x, red_center_y), 3, (255, 0, 255), 3)
+
 
     height, width = FRAME_SIZE(frame)
 
-    cv2.rectangle(frame, (int((width/2)-20), int((height/2)-20)), 
-                  (int((width/2)+20), int((height/2)+20)), (0, 255, 0), 3)
+
+    # Target square
+    target = (int((width/2)-20), int((height/2)-20), int((width/2)+20), int((height/2)+20))
+
+    x_aligned = True if (red_center_x > target[0] and red_center_x < target[2]) else False
+    y_aligned = True if (red_center_y > target[1] and red_center_y < target[3]) else False
+
+
+    if x_aligned and y_aligned:
+        cv2.putText(frame, "Aligned", (50, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
+    else:
+        cv2.putText(frame, "Not Aligned", (50, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2)
+
+    cv2.rectangle(frame, (target[0], target[1]), 
+                  (target[2], target[3]), (0, 255, 0), 3)
 
     # Show the webcam feed
     cv2.imshow("Webcam Feed", frame)
