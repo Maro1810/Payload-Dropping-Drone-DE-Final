@@ -6,7 +6,7 @@ import numpy as np
 video_capture = cv2.VideoCapture(0)
 
 # These are random values for now 
-red_lower_bound = np.array([160, 120, 160])
+red_lower_bound = np.array([150, 120, 160])
 red_upper_bound = np.array([180, 255, 255])
 
 # Tune these upper and lower bounds for the green color
@@ -22,14 +22,29 @@ def FRAME_SIZE(frame):
     
     return height, width
 
+allowed_error = 5
+
 red_center_x = 0
 red_center_y = 0
 
 green_center_x = 0
 green_center_y = 0
 
+green_area = 0
+red_area = 0
+
+average_x = 0
+average_y = 0
+
 x_aligned = False
 y_aligned = False
+
+x_error = 100
+y_error = 100
+
+red_contour = None
+
+green_contour = None
 
 # Throw an error and exit if the video file cannot be opened (not applicable in this case)
 if not video_capture.isOpened():
@@ -81,27 +96,23 @@ while True:
     
     green_contours, __ = cv2.findContours(green_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
-    red_contour = None
-
-    green_contour = None
-
     for i, contour in enumerate(red_contours):
         if cv2.contourArea(contour) > 6000:
             # cv2.drawContours(frame, contour, -1, (0, 255, 0), 3)
-            M = cv2.moments(contour)
+            # M = cv2.moments(contour)
 
             red_contour = contour
             
             # Calculate the center of the contour, where m00 represents the area, and m10 and m01
             # are the weighted sums of the x and y values
-            red_center_x = int(M['m10']/M['m00'])
-            red_center_y = int(M['m01']/M['m00'])
+            # red_center_x = int(M['m10']/M['m00'])
+            # red_center_y = int(M['m01']/M['m00'])
 
-            cv2.circle(frame, (red_center_x, red_center_y), 3, (0, 255, 255), 3)
+            # cv2.circle(frame, (red_center_x, red_center_y), 3, (0, 255, 255), 3)
 
     for i, contour in enumerate(green_contours):
         if cv2.contourArea(contour) > 6000:
-            cv2.drawContours(frame, contour, -1, (0, 255, 0), 3)
+            # cv2.drawContours(frame, contour, -1, (0, 255, 0), 3)
 
             green_contour = contour
 
@@ -112,7 +123,42 @@ while True:
 
             # cv2.circle(frame, (red_center_x, red_center_y), 3, (255, 0, 255), 3)
 
+    # cv2.drawContours(frame, red_contour, -1, (0, 255, 0), 3)
 
+
+    if green_contour is not None and red_contour is not None:
+        green_area = cv2.contourArea(green_contour)
+        red_area = cv2.contourArea(red_contour)
+
+    
+    red_moment = cv2.moments(red_contour)
+    green_moment = cv2.moments(green_contour)
+    
+
+    if red_moment['m00'] != 0 and green_moment['m00'] != 0:
+
+    
+        red_center_x = int(red_moment['m10']/red_moment['m00'])
+        red_center_y = int(red_moment['m01']/red_moment['m00'])
+
+        green_center_x = int(green_moment['m10']/green_moment['m00'])
+        green_center_y = int(green_moment['m01']/green_moment['m00'])
+
+        average_x = int((red_center_x+green_center_x)/2)
+        average_y = int((red_center_y+green_center_y)/2)
+
+        x_error = abs((red_center_x - green_center_x)/red_center_x*100)
+        y_error = abs((red_center_y - green_center_y)/red_center_y*100)
+
+    if (x_error < allowed_error) and (y_error < allowed_error):
+
+        cv2.drawContours(frame, red_contour, -1, (0, 255, 0), 3)
+        cv2.drawContours(frame, green_contour, -1, (0, 255, 0), 3)
+
+        cv2.circle(frame, (average_x, average_y), 3, (0, 255, 255), 3)
+    
+    # cv2.drawContours(frame, red_contour, -1, (0, 255, 0), 3)
+    # cv2.drawContours(frame, green_contour, -1, (0, 255, 0), 3)
     height, width = FRAME_SIZE(frame)
 
 
