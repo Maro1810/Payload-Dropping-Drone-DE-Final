@@ -97,35 +97,16 @@ while True:
     
     green_contours, __ = cv2.findContours(green_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
+    # Update contours red and green contours if they are in view on screen
     for i, contour in enumerate(red_contours):
         if cv2.contourArea(contour) > 6000:
-            # cv2.drawContours(frame, contour, -1, (0, 255, 0), 3)
-            # M = cv2.moments(contour)
 
             red_contour = contour
-            
-            # Calculate the center of the contour, where m00 represents the area, and m10 and m01
-            # are the weighted sums of the x and y values
-            # red_center_x = int(M['m10']/M['m00'])
-            # red_center_y = int(M['m01']/M['m00'])
-
-            # cv2.circle(frame, (red_center_x, red_center_y), 3, (0, 255, 255), 3)
 
     for i, contour in enumerate(green_contours):
         if cv2.contourArea(contour) > 6000:
-            # cv2.drawContours(frame, contour, -1, (0, 255, 0), 3)
 
             green_contour = contour
-
-            # M = cv2.moments(contour)
-
-            # red_center_x2 = int(M['m10']/M['m00'])
-            # red_center_y2 = int(M['m01']/M['m00'])
-
-            # cv2.circle(frame, (red_center_x, red_center_y), 3, (255, 0, 255), 3)
-
-    # cv2.drawContours(frame, red_contour, -1, (0, 255, 0), 3)
-
 
     if green_contour is not None and red_contour is not None:
         green_area = cv2.contourArea(green_contour)
@@ -153,13 +134,19 @@ while True:
 
     if (x_error < allowed_error) and (y_error < allowed_error):
 
+        
+        if not x_aligned and not y_aligned:
+            direction = "right" if average_x > target[2] else "left"
+            print("Move " + direction)
+        elif not y_aligned:
+            direction = "down" if average_y <  target[1] else "up"
+            print("Move " + direction)
+
         cv2.drawContours(frame, red_contour, -1, (0, 255, 0), 3)
         cv2.drawContours(frame, green_contour, -1, (0, 255, 0), 3)
 
         cv2.circle(frame, (average_x, average_y), 3, (0, 255, 255), 3)
     
-    # cv2.drawContours(frame, red_contour, -1, (0, 255, 0), 3)
-    # cv2.drawContours(frame, green_contour, -1, (0, 255, 0), 3)
     height, width = FRAME_SIZE(frame)
 
 
@@ -169,12 +156,6 @@ while True:
     x_aligned = True if (red_center_x > target[0] and red_center_x < target[2]) else False
     y_aligned = True if (red_center_y > target[1] and red_center_y < target[3]) else False
 
-    if not x_aligned and not y_aligned:
-        direction = "left" if average_x > target[2] else "right"
-        print("Move " + direction)
-    elif not y_aligned:
-        direction = "down" if average_y <  target[1] else "up"
-        print("Move " + direction)
 
     if x_aligned and y_aligned:
         cv2.putText(frame, "Aligned", (50, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
