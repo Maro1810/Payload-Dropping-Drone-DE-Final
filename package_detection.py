@@ -6,12 +6,12 @@ import numpy as np
 video_capture = cv2.VideoCapture(0)
 
 # These are random values for now 
-red_lower_bound = np.array([150, 120, 160])
+red_lower_bound = np.array([150, 90, 160])
 red_upper_bound = np.array([180, 255, 255])
 
 # Tune these upper and lower bounds for the green color
-green_lower_bound = np.array([35, 40, 40])
-green_upper_bound = np.array([85, 255, 255])
+green_lower_bound = np.array([25, 40, 40])
+green_upper_bound = np.array([105, 255, 255])
 
 def BGR_TO_HSV(color):
     hsv = cv2.cvtColor(color, cv2.COLOR_BGR2HSV)
@@ -21,6 +21,7 @@ def FRAME_SIZE(frame):
     height, width, _ = frame.shape
     
     return height, width
+
 
 allowed_error = 5
 
@@ -168,6 +169,12 @@ while True:
     x_aligned = True if (red_center_x > target[0] and red_center_x < target[2]) else False
     y_aligned = True if (red_center_y > target[1] and red_center_y < target[3]) else False
 
+    if not x_aligned and not y_aligned:
+        direction = "left" if average_x > target[2] else "right"
+        print("Move " + direction)
+    elif not y_aligned:
+        direction = "down" if average_y <  target[1] else "up"
+        print("Move " + direction)
 
     if x_aligned and y_aligned:
         cv2.putText(frame, "Aligned", (50, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
