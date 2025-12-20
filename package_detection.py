@@ -153,8 +153,8 @@ while True:
     # Target square
     target = (int((width/2)-20), int((height/2)-20), int((width/2)+20), int((height/2)+20))
 
-    x_aligned = True if (red_center_x > target[0] and red_center_x < target[2]) else False
-    y_aligned = True if (red_center_y > target[1] and red_center_y < target[3]) else False
+    x_aligned = True if (average_x > target[0] and average_x < target[2]) else False
+    y_aligned = True if (average_y > target[1] and average_y < target[3]) else False
 
 
     if x_aligned and y_aligned:
