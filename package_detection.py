@@ -3,10 +3,10 @@ import numpy as np
 
 # Using "0" instead of a file name will use the webcam feed
 # In the future replace this with the source to the ESP32 web server
-video_capture = cv2.VideoCapture(0)
+video_capture = cv2.VideoCapture("http://192.168.68.69:81/stream")
 
 # These are random values for now 
-red_lower_bound = np.array([150, 90, 160])
+red_lower_bound = np.array([120, 90, 160])
 red_upper_bound = np.array([180, 255, 255])
 
 # Tune these upper and lower bounds for the green color
@@ -138,17 +138,22 @@ while True:
         if not x_aligned and not y_aligned:
             direction = "right" if average_x > target[2] else "left"
             print("Move " + direction)
+        elif not x_aligned:
+            direction = "right" if average_x > target[2] else "left"
+            print("Move " + direction)
         elif not y_aligned:
-            direction = "down" if average_y <  target[1] else "up"
+            direction = "up" if average_y <  target[1] else "down"
             print("Move " + direction)
 
         cv2.drawContours(frame, red_contour, -1, (0, 255, 0), 3)
         cv2.drawContours(frame, green_contour, -1, (0, 255, 0), 3)
 
         cv2.circle(frame, (average_x, average_y), 3, (0, 255, 255), 3)
+    else:
+        average_x = 0
+        average_y = 0
     
     height, width = FRAME_SIZE(frame)
-
 
     # Target square
     target = (int((width/2)-20), int((height/2)-20), int((width/2)+20), int((height/2)+20))
