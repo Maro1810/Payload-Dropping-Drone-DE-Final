@@ -6,6 +6,7 @@ class State(Enum):
     SEARCHING = auto()
     ALIGNING = auto()
     DESCENDING = auto()
+    LOW_ENOUGH = auto()
     GRABBING = auto()
 
 # Using "0" instead of a file name will use the webcam feed
@@ -13,7 +14,7 @@ class State(Enum):
 video_capture = cv2.VideoCapture(0)
 
 # These are random values for now 
-red_lower_bound = np.array([120, 90, 160])
+red_lower_bound = np.array([120, 90, 150])
 red_upper_bound = np.array([180, 255, 255])
 
 # Tune these upper and lower bounds for the green color
@@ -30,13 +31,13 @@ def FRAME_SIZE(frame):
     return height, width
 
 
-allowed_error = 10
+allowed_error = 100
 
 red_center_x = 0
 red_center_y = 0
 
-green_center_x = 0
-green_center_y = 0
+green_center_x = -10
+green_center_y = -10
 
 green_area = 0
 red_area = 0
@@ -50,10 +51,6 @@ y_aligned = False
 x_error = 100
 y_error = 100
 
-red_contour = None
-
-green_contour = None
-
 # Throw an error and exit if the video file cannot be opened (not applicable in this case)
 if not video_capture.isOpened():
     print("Error: video file could not be opened")
@@ -65,6 +62,12 @@ currentState = State.SEARCHING
 
 # Loop infinitely through the video file/webcam feed, retrieving frames and displaying them
 while True:
+
+    red_contour = None
+    green_contour = None
+
+    red_moment = None
+    green_moment = None
 
     # The read() function returns a tuple that contains a boolean whether the frame was retrieved
     # and something that essentially represents the video frame 
@@ -105,74 +108,91 @@ while True:
     red_contours, _ = cv2.findContours(red_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
     
     green_contours, __ = cv2.findContours(green_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-
-    # Update contours red and green contours if they are in view on screen
-    for i, contour in enumerate(red_contours):
-        if cv2.contourArea(contour) > 6000:
-
-            red_contour = contour
-
-    for i, contour in enumerate(green_contours):
-        if cv2.contourArea(contour) > 6000:
-
-            green_contour = contour
-
-    if green_contour is not None and red_contour is not None:
-        green_area = cv2.contourArea(green_contour)
-        red_area = cv2.contourArea(red_contour)
-
     
-    red_moment = cv2.moments(red_contour)
-    green_moment = cv2.moments(green_contour)
-    
-
-    if red_moment['m00'] != 0 and green_moment['m00'] != 0:
-
-    
-        red_center_x = int(red_moment['m10']/red_moment['m00'])
-        red_center_y = int(red_moment['m01']/red_moment['m00'])
-
-        green_center_x = int(green_moment['m10']/green_moment['m00'])
-        green_center_y = int(green_moment['m01']/green_moment['m00'])
-
-        average_x = int((red_center_x+green_center_x)/2)
-        average_y = int((red_center_y+green_center_y)/2)
-
-        x_error = abs((red_center_x - green_center_x)/red_center_x*100)
-        y_error = abs((red_center_y - green_center_y)/red_center_y*100)
-        
     height, width = FRAME_SIZE(frame)
     
     # Target square
     target = (int((width/2)-20), int((height/2)-20), int((width/2)+20), int((height/2)+20))
 
-    if (x_error < allowed_error) and (y_error < allowed_error):
+    
+    best_red_contour = None
+    best_red_contour_area = 0
 
-        currentState = State.ALIGNING
+    # Update contours red and green contours if they are in view on screen
+    for i, contour in enumerate(red_contours):
+
+        if cv2.contourArea(contour) > 6000:
+
+            if cv2.contourArea(contour) > best_red_contour_area:        
+                best_red_contour = contour
+                best_red_contour_area = cv2.contourArea(contour)
+
+            red_contour = best_red_contour
+
+    best_green_contour = None
+    best_green_contour_area = 0
+
+    for i, contour in enumerate(green_contours):
+
+
+        if cv2.contourArea(contour) > 6000:
+            
+            if cv2.contourArea(contour) > best_green_contour_area:        
+                best_green_contour = contour
+                best_green_contour_area = cv2.contourArea(contour)
+
+        green_contour = best_green_contour
+
+    if green_contour is not None and red_contour is not None:
+        green_area = cv2.contourArea(green_contour)
+        red_area = cv2.contourArea(red_contour)
+
         
-        if not x_aligned and not y_aligned:
-            direction = "right" if average_x > target[2] else "left"
-            print("Move " + direction)
-        elif not x_aligned:
-            direction = "right" if average_x > target[2] else "left"
-            print("Move " + direction)
-        elif not y_aligned:
-            direction = "down" if average_y <  target[1] else "up"
-            print("Move " + direction)
+        red_moment = cv2.moments(red_contour)
+        green_moment = cv2.moments(green_contour)
+    
+        if red_moment['m00'] != 0 and green_moment['m00'] != 0:
 
-        cv2.drawContours(frame, red_contour, -1, (0, 255, 0), 3)
-        cv2.drawContours(frame, green_contour, -1, (0, 255, 0), 3)
+    
+            red_center_x = int(red_moment['m10']/red_moment['m00'])
+            red_center_y = int(red_moment['m01']/red_moment['m00'])
 
-        cv2.circle(frame, (average_x, average_y), 3, (0, 255, 255), 3)
+            green_center_x = int(green_moment['m10']/green_moment['m00'])
+            green_center_y = int(green_moment['m01']/green_moment['m00'])
+
+            average_x = int((red_center_x+green_center_x)/2)
+            average_y = int((red_center_y+green_center_y)/2)
+
+            x_error = abs((red_center_x - green_center_x)/red_center_x*100)
+            y_error = abs((red_center_y - green_center_y)/red_center_y*100)
+
+        if (x_error < allowed_error) and (y_error < allowed_error):
+
+            currentState = State.ALIGNING
+        
+            if not x_aligned and not y_aligned:
+                direction = "right" if average_x > target[2] else "left"
+                print("Move " + direction)
+            elif not x_aligned:
+                direction = "right" if average_x > target[2] else "left"
+                print("Move " + direction)
+            elif not y_aligned:
+                direction = "down" if average_y <  target[1] else "up"
+                print("Move " + direction)
+
+            cv2.drawContours(frame, red_contour, -1, (0, 255, 0), 3)
+            cv2.drawContours(frame, green_contour, -1, (0, 255, 0), 3)
+
+            cv2.circle(frame, (average_x, average_y), 3, (0, 255, 255), 3)
+        else:
+            average_x = 0
+            average_y = 0
+
     else:
-        average_x = 0
-        average_y = 0
-
         currentState = State.SEARCHING
 
     x_aligned = True if (average_x > target[0] and average_x < target[2]) else False
     y_aligned = True if (average_y > target[1] and average_y < target[3]) else False
-
 
     if x_aligned and y_aligned:
         cv2.putText(frame, "Aligned", (50, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
