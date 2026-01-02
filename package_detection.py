@@ -1,9 +1,16 @@
 import cv2
 import numpy as np
+from enum import Enum, auto
+
+class State(Enum):
+    SEARCHING = auto()
+    ALIGNING = auto()
+    DESCENDING = auto()
+    GRABBING = auto()
 
 # Using "0" instead of a file name will use the webcam feed
 # In the future replace this with the source to the ESP32 web server
-video_capture = cv2.VideoCapture("http://192.168.68.69:81/stream")
+video_capture = cv2.VideoCapture(0)
 
 # These are random values for now 
 red_lower_bound = np.array([120, 90, 160])
@@ -23,7 +30,7 @@ def FRAME_SIZE(frame):
     return height, width
 
 
-allowed_error = 5
+allowed_error = 10
 
 red_center_x = 0
 red_center_y = 0
@@ -53,6 +60,8 @@ if not video_capture.isOpened():
     video_capture.release()
 
     exit()
+
+currentState = State.SEARCHING
 
 # Loop infinitely through the video file/webcam feed, retrieving frames and displaying them
 while True:
@@ -131,9 +140,15 @@ while True:
 
         x_error = abs((red_center_x - green_center_x)/red_center_x*100)
         y_error = abs((red_center_y - green_center_y)/red_center_y*100)
+        
+    height, width = FRAME_SIZE(frame)
+    
+    # Target square
+    target = (int((width/2)-20), int((height/2)-20), int((width/2)+20), int((height/2)+20))
 
     if (x_error < allowed_error) and (y_error < allowed_error):
 
+        currentState = State.ALIGNING
         
         if not x_aligned and not y_aligned:
             direction = "right" if average_x > target[2] else "left"
@@ -142,7 +157,7 @@ while True:
             direction = "right" if average_x > target[2] else "left"
             print("Move " + direction)
         elif not y_aligned:
-            direction = "up" if average_y <  target[1] else "down"
+            direction = "down" if average_y <  target[1] else "up"
             print("Move " + direction)
 
         cv2.drawContours(frame, red_contour, -1, (0, 255, 0), 3)
@@ -152,11 +167,8 @@ while True:
     else:
         average_x = 0
         average_y = 0
-    
-    height, width = FRAME_SIZE(frame)
 
-    # Target square
-    target = (int((width/2)-20), int((height/2)-20), int((width/2)+20), int((height/2)+20))
+        currentState = State.SEARCHING
 
     x_aligned = True if (average_x > target[0] and average_x < target[2]) else False
     y_aligned = True if (average_y > target[1] and average_y < target[3]) else False
@@ -164,8 +176,12 @@ while True:
 
     if x_aligned and y_aligned:
         cv2.putText(frame, "Aligned", (50, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
+        currentState = State.DESCENDING
+
     else:
         cv2.putText(frame, "Not Aligned", (50, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2)
+    
+    cv2.putText(frame, currentState.name, (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2)
 
     cv2.rectangle(frame, (target[0], target[1]), 
                   (target[2], target[3]), (0, 255, 0), 3)
