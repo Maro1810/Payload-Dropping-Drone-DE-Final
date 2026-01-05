@@ -6,3 +6,5 @@ Here you will find the codebase for Sanchay and I's project (although Sanchay ha
 ## ***Required Libaries***
 - OpenCV
 - NumPy
+- Matplotlib
+- simple-pid
