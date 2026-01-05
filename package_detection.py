@@ -1,25 +1,37 @@
 import cv2
 import numpy as np
 from enum import Enum, auto
+from simple_pid import PID
+import matplotlib.pyplot as plt
+import time
 
+# Create enum class for states
 class State(Enum):
     SEARCHING = auto()
     ALIGNING = auto()
     DESCENDING = auto()
-    LOW_ENOUGH = auto()
     GRABBING = auto()
 
 # Using "0" instead of a file name will use the webcam feed
 # In the future replace this with the source to the ESP32 web server
 video_capture = cv2.VideoCapture(0)
 
-# These are random values for now 
 red_lower_bound = np.array([120, 90, 150])
 red_upper_bound = np.array([180, 255, 255])
 
-# Tune these upper and lower bounds for the green color
 green_lower_bound = np.array([25, 40, 40])
 green_upper_bound = np.array([105, 255, 255])
+
+pidX = PID(0.005, 0, 0, 0) # Tune these constants
+pidY = PID(0.005, 0, 0, 0) # Tune
+
+deadband = 0 # idk what value to use yet
+
+outputX = 0
+outputY = 0
+
+pidX.output_limits = (-1, 1)
+pidY.output_limits = (-1, 1)
 
 def BGR_TO_HSV(color):
     hsv = cv2.cvtColor(color, cv2.COLOR_BGR2HSV)
@@ -51,6 +63,26 @@ y_aligned = False
 x_error = 100
 y_error = 100
 
+start_time = time.time()
+current_time = start_time
+
+output_x_array = []
+output_y_array = []
+time_array = []
+
+fig = plt.figure()
+fig2 = plt.figure()
+
+ax = fig.add_subplot(1, 1, 1)
+
+ax2 = fig2.add_subplot(1, 1, 1)
+
+# resize the figures cuz they were too large
+fig.set_size_inches((2, 2))
+fig2.set_size_inches((2, 2))
+
+plt.ion()
+
 # Throw an error and exit if the video file cannot be opened (not applicable in this case)
 if not video_capture.isOpened():
     print("Error: video file could not be opened")
@@ -63,11 +95,22 @@ currentState = State.SEARCHING
 # Loop infinitely through the video file/webcam feed, retrieving frames and displaying them
 while True:
 
+
+    current_time = time.time() - start_time
+
+    # Update arrays for MatPlotLib
+    output_x_array.append(outputX)
+    output_y_array.append(outputY)
+    time_array.append(current_time)
+
     red_contour = None
     green_contour = None
 
     red_moment = None
     green_moment = None
+
+    ax.plot(time_array, output_x_array)
+    ax2.plot(time_array, output_y_array)
 
     # The read() function returns a tuple that contains a boolean whether the frame was retrieved
     # and something that essentially represents the video frame 
@@ -110,6 +153,9 @@ while True:
     green_contours, __ = cv2.findContours(green_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
     
     height, width = FRAME_SIZE(frame)
+
+    pidX.setpoint = width // 2
+    pidY.setpoint = height // 2
     
     # Target square
     target = (int((width/2)-20), int((height/2)-20), int((width/2)+20), int((height/2)+20))
@@ -171,14 +217,24 @@ while True:
             currentState = State.ALIGNING
         
             if not x_aligned and not y_aligned:
-                direction = "right" if average_x > target[2] else "left"
-                print("Move " + direction)
+                # direction = "right" if average_x > target[2] else "left"
+                # print("Move " + direction)    
+                outputX = pidX(average_x)
+                outputY = 0
+
+                print(outputX)
+
             elif not x_aligned:
-                direction = "right" if average_x > target[2] else "left"
-                print("Move " + direction)
+                # direction = "right" if average_x > target[2] else "left"
+                # print("Move " + direction)
+                outputX = pidX(average_x)
+
+
             elif not y_aligned:
-                direction = "down" if average_y <  target[1] else "up"
-                print("Move " + direction)
+                # direction = "down" if average_y < target[1] else "up"
+                # print("Move " + direction)
+                outputY = pidY(average_y)
+                outputX = 0
 
             cv2.drawContours(frame, red_contour, -1, (0, 255, 0), 3)
             cv2.drawContours(frame, green_contour, -1, (0, 255, 0), 3)
@@ -191,6 +247,7 @@ while True:
     else:
         currentState = State.SEARCHING
 
+
     x_aligned = True if (average_x > target[0] and average_x < target[2]) else False
     y_aligned = True if (average_y > target[1] and average_y < target[3]) else False
 
@@ -201,23 +258,26 @@ while True:
     else:
         cv2.putText(frame, "Not Aligned", (50, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2)
     
-    cv2.putText(frame, currentState.name, (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2)
+    cv2.putText(frame, currentState.name, (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 255), 2)
 
     cv2.rectangle(frame, (target[0], target[1]), 
                   (target[2], target[3]), (0, 255, 0), 3)
 
-    # Show the webcam feed
-    cv2.imshow("Webcam Feed", frame)
+    # update matplotlib graphs
+    plt.pause(0.001)
+
+    # Show the camera feed
+    cv2.imshow("Camera Feed", frame)
 
     # Shows the same feed but filters out anything that doesn't match the color
-    cv2.imshow("Red Mask", blackout)
-    cv2.imshow("Green Mask", blackout2)
+    # cv2.imshow("Red Mask", blackout)
+    # cv2.imshow("Green Mask", blackout2)
     
-
     # If the key pressed by the user is q, break out of the loop
     if cv2.waitKey(1) == ord('q'):
         break
 
+print(f"Exited program at timestamp: {current_time} seconds")
 # These two lines of code will release the video capture object and close all of the
 # windows that were previously open
 video_capture.release()
