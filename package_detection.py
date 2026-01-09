@@ -12,6 +12,15 @@ class State(Enum):
     DESCENDING = auto()
     GRABBING = auto()
 
+FOCAL_LENGTH = 4.7
+DOT_PITCH = 1.5
+
+K = np.array([2333, 0, 160], [0, 2333, 120], [0, 0, 1])
+
+Ki = np.linalg.inv(K)
+
+r_optical = np.array([0, 0, 1])
+
 # Using "0" instead of a file name will use the webcam feed
 # In the future replace this with the source to the ESP32 web server
 video_capture = cv2.VideoCapture(0)
@@ -219,21 +228,19 @@ while True:
             if not x_aligned and not y_aligned:
                 # direction = "right" if average_x > target[2] else "left"
                 # print("Move " + direction)    
-                outputX = pidX(average_x)
+                outputX = -pidX(average_x)
                 outputY = 0
-
-                print(outputX)
 
             elif not x_aligned:
                 # direction = "right" if average_x > target[2] else "left"
                 # print("Move " + direction)
-                outputX = pidX(average_x)
+                outputX = -pidX(average_x)
 
 
             elif not y_aligned:
                 # direction = "down" if average_y < target[1] else "up"
                 # print("Move " + direction)
-                outputY = pidY(average_y)
+                outputY = -pidY(average_y)
                 outputX = 0
 
             cv2.drawContours(frame, red_contour, -1, (0, 255, 0), 3)
@@ -247,6 +254,14 @@ while True:
     else:
         currentState = State.SEARCHING
 
+    P = np.array([average_x, average_y, 1])
+
+    
+    r1 = Ki.dot(P)
+
+    cos_theta = (r_optical.dot(r1))/(np.linalg.norm(r_optical)*np.linalg.norm(r1))
+
+    optical_axis_angle = np.acos(cos_theta)
 
     x_aligned = True if (average_x > target[0] and average_x < target[2]) else False
     y_aligned = True if (average_y > target[1] and average_y < target[3]) else False
@@ -268,6 +283,8 @@ while True:
 
     # Show the camera feed
     cv2.imshow("Camera Feed", frame)
+
+    cv2.resizeWindow("Camera Feed", width, height)
 
     # Shows the same feed but filters out anything that doesn't match the color
     # cv2.imshow("Red Mask", blackout)
