@@ -67,9 +67,15 @@ We also know that the focal axis of the camera passes through the center of the 
 
 In general, this process can be encoded by a matrix $K$, such that
 
-$$K =\begin{bmatrix} f & 0 & c_x 
-\\0 & f & c_y 
-\\0 & 0 & 1\end{bmatrix}$$
+$$
+K =
+\begin{bmatrix}
+f & 0 & c_x \\
+0 & f & c_y \\
+0 & 0 & 1
+\end{bmatrix}
+$$
+
 
 If we apply this matrix to the camera coordinates $(\frac{X}{Z}, \frac{Y}{Z}, 1)$, we can get the image coordinates $(x, y, 1)$
 
