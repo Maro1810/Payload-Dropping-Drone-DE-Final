@@ -79,9 +79,8 @@ $$
 
 If we apply this matrix to the camera coordinates $(\frac{X}{Z}, \frac{Y}{Z}, 1)$, we can get the image coordinates $(x, y, 1)$
 
-$$\left[\begin{array}{c} x \\ y \\ 1 \end{array}\right]=\left[\begin{array}{ccc}f & 0 & c_x \\
-0 & f & c_y \\0 & 0 & 1
-\end{array}\right]\left[\begin{array}{c} \frac{X}{Z} \\ \frac{Y}{Z} \\ 1 \end{array}\right]$$
+$$\left[\begin{array}{c}x \\\\ y \\\\ 1 \end{array}\right]=\left[\begin{array}{ccc} f & 0 & c_x \\\\ 0 & f & c_y \\\\ 0 & 0 & 1 \end{array}\right] \left[\begin{array}{c}\frac{X}{Z} \\\\ \frac{Y}{Z} \\\\ 1 \end{array}\right]$$
+
 
 
 
@@ -101,4 +100,4 @@ $$Z = \text{altitude}$$
 
 $$Z\begin{bmatrix}\frac{X}{Z} \\ \frac{Y}{Z} \\ 1 \end{bmatrix}=\begin{bmatrix} X \\ Y \\ Z \end{bmatrix} $$
 
-From here, we can determine the norm of the vector $\begin{bmatrix}X \\ Y \end{bmatrix}$, and this will be the horizontal distance.
+From here, we can determine the norm of the vector $\begin{bmatrix}X \\ Y\end{bmatrix}$, and this will be the horizontal distance.
