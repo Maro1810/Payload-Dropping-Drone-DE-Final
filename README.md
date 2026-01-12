@@ -100,4 +100,4 @@ $$Z = \text{altitude}$$
 
 $$Z\cdot\begin{bmatrix} \frac{X}{Z} \\\\ \frac{Y}{Z} \\\\ 1 \end{bmatrix}=\begin{bmatrix} X \\\\ Y \\\\ Z \end{bmatrix} $$
 
-From here, we can determine the norm of the vector $\begin{bmatrix} X \\\\ Y \end{bmatrix}$, and this will be the horizontal distance.
+From here, we can determine the norm of the vector $\langle X, Y \rangle$, and this will be the horizontal distance.
