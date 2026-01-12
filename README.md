@@ -21,7 +21,8 @@ Before I started coding, I made a flowchart and a state machine diagram to effec
 
 I decided to use a state machine approach when designing the alignment code as it provides an easy way to know when the drone is in each of the four states, searching, aligning, descending, and grabbing. Below is the diagram of the possible transitions between the four states.
 
-![StateMachine](imgs/state_machine.png)
+<img src="imgs/state_machine.png" alt="state machine graph" width="554" height="363" style="display: block; margin: 0 auto;">
+
 
 ## Package Detection
 
@@ -31,7 +32,7 @@ The first part of the program is the package detection which can be split up int
 
 The way we planned on designing the package was to have two bright colors, red and green, with green on the outer edge of the package, and red on the inside. The reason for this is to make detecting the package easier, and having two colors will reduce the likelihood of detecting an object that is not the package. 
 
-![test_sheet](imgs/testing_sheet.png)
+<img src="imgs/testing_sheet.png" alt="testing sheet" width="455" height="350" style="display: block; margin: 0 auto;">
 
 In this project, I mainly used OpenCV for the image processing, and essentially, I first applied two color masks that will filter out everything except for the colors red and green respectively. From these color masks, we can then figure out exactly where the colors red and green show up on screen. The continuous green/red "areas" on screen are known as contours.
 
@@ -55,7 +56,7 @@ As a quick background, the way we can determine horizontal distance from the cam
 
 To keep things straightfoward, I will be using the pinhole camera model. The picture below illustrates what this model looks like.
 
-![pinhole](imgs/pinhole_camera.png)
+<img src="imgs/pinhole_camera.png" alt="pinhole camera" width="370" height="170" style="display: block; margin: 0 auto;">
 
 f represents the focal length of the camera, x is the distance from the pinhole/focal axis in pixels, X is one of the components of the distance to the object, and Z is the height of the object.
 
@@ -82,8 +83,6 @@ If we apply this matrix to the camera coordinates $(\frac{X}{Z}, \frac{Y}{Z}, 1)
 $$\left[\begin{array}{c}x \\\\ y \\\\ 1 \end{array}\right]=\left[\begin{array}{ccc} f & 0 & c_x \\\\ 0 & f & c_y \\\\ 0 & 0 & 1 \end{array}\right] \left[\begin{array}{c}\frac{X}{Z} \\\\ \frac{Y}{Z} \\\\ 1 \end{array}\right]$$
 
 
-
-
 Now that we have defined the forward process of going from camera coordinates to image coordinates, we can determine the reverse process of back-projecting a vector to determine camera coordinates from image coordinates.
 
 The reverse process will simply be:
@@ -101,3 +100,14 @@ $$Z = \text{altitude}$$
 $$Z\cdot\begin{bmatrix} \frac{X}{Z} \\\\ \frac{Y}{Z} \\\\ 1 \end{bmatrix}=\begin{bmatrix} X \\\\ Y \\\\ Z \end{bmatrix} $$
 
 From here, we can determine the norm of the vector $\langle X, Y \rangle$, and this will be the horizontal distance.
+
+## Challenges Faced
+
+Some of the early challenges I faced during this project was determining how I would detect the package. At first, my approach was to use a combination of color detection and rectangle detection, and essentially look for rectangles on screen with a specific color. However, the rectangle detection program did not work well, and was not reliable as the detection of rectangles on screen would cut in and out rapidly. As a result, I had to switch to my current approach of using layered color detection.
+
+More recently, when working with figuring out horizontal distance from the camera to the package, I ran into the issue of requiring an accurate focal length to carry out these calculations. The vendor for the ESP32 Dev Board + ESP32 Cam Module did not give the specs for the camera, which means that I will have to figure out the focal length experimentally.
+
+
+## Skills Demonstrated
+
+The skills I demonstrated throughout this project were being able to effectively code in Python, and use OpenCV to create a vision pipeline that can go from a raw video stream to detecting specific objects. 

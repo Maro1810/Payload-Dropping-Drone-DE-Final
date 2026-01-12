@@ -23,7 +23,7 @@ r_optical = np.array([0, 0, 1])
 
 # Using "0" instead of a file name will use the webcam feed
 # In the future replace this with the source to the ESP32 web server
-video_capture = cv2.VideoCapture("http://192.168.68.53:81/stream")
+video_capture = cv2.VideoCapture(0)
 
 
 red_lower_bound = np.array([0, 80, 130])
