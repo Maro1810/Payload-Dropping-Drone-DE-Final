@@ -71,19 +71,20 @@ $$K =\begin{bmatrix}f & 0 & c_x \\0 & f & c_y \\0 & 0 & 1\end{bmatrix}$$
 
 If we apply this matrix to the camera coordinates $(\frac{X}{Z}, \frac{Y}{Z}, 1)$, we can get the image coordinates $(x, y, 1)$
 
-$$\begin{bmatrix}x \\y\\1\end{bmatrix}=\begin{bmatrix}f & 0 & c_x \\0 & f & c_y \\0 & 0 & 1\end{bmatrix}\begin{bmatrix}\frac{X}{Z} \\\frac{Y}{Z}\\1\end{bmatrix}$$
+$$\begin{bmatrix}x \\ y \\1\end{bmatrix}=\begin{bmatrix}f & 0 & c_x \\ 0 & f & c_y \\ 0 & 0 & 1\end{bmatrix}\begin{bmatrix} \frac{X}{Z} \\ \frac{Y}{Z}\\ 1 \end{bmatrix}$$
 
 Now that we have defined the forward process of going from camera coordinates to image coordinates, we can determine the reverse process of back-projecting a vector to determine camera coordinates from image coordinates.
 
 The reverse process will simply be:
 
-$$\begin{bmatrix}\frac{X}{Z} \\\frac{Y}{Z} \\ 1\end{bmatrix}=K^{-1}\cdot \begin{bmatrix}x \\ y\\ 1\end{bmatrix}$$
+$$\begin{bmatrix}\frac{X}{Z} \\ \frac{Y}{Z} \\ 1\end{bmatrix}=K^{-1}\cdot \begin{bmatrix}x \\ y\\ 1\end{bmatrix}$$
 
 where $K^{-1}$ is the inverse matrix of the camera matrix $K$
 
 
 On the drone, we will have a barometer which can tell us the altitude of the drone. If we take note of the altitude on takeoff, we can determine the altitude relative to that starting position. Since $Z$ represents the altitude assuming no tilt of the drone (which is an ideal scenario), we can multiply the resultant vector by the altitude, or:
 
-$$Z = altitude \newline\newline Z\cdot\begin{bmatrix}\frac{X}{Z} \\\frac{Y}{Z} \\1\end{bmatrix}=\begin{bmatrix}X \\ Y\\ 1\end{bmatrix}$$
+$$Z = altitude \newline$$
+$$Z\cdot\begin{bmatrix} \frac{X}{Z} \\ \frac{Y}{Z} \\1\end{bmatrix}=\begin{bmatrix} X \\ Y \\ 1\end{bmatrix}$$
 
-From here, we can determine the norm of the vector $\begin{bmatrix}X \\ Y \end{bmatrix}$, and this will be the horizontal distance.
+From here, we can determine the norm of the vector $\begin{bmatrix} X \\ Y \end{bmatrix}$, and this will be the horizontal distance.
