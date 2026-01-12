@@ -15,7 +15,7 @@ class State(Enum):
 FOCAL_LENGTH = 4.7
 DOT_PITCH = 1.5
 
-K = np.array([2333, 0, 160], [0, 2333, 120], [0, 0, 1])
+K = np.array([[238, 0, 160], [0, 238, 120], [0, 0, 1]])
 
 Ki = np.linalg.inv(K)
 
@@ -23,12 +23,13 @@ r_optical = np.array([0, 0, 1])
 
 # Using "0" instead of a file name will use the webcam feed
 # In the future replace this with the source to the ESP32 web server
-video_capture = cv2.VideoCapture(0)
+video_capture = cv2.VideoCapture("http://192.168.68.53:81/stream")
 
-red_lower_bound = np.array([120, 90, 150])
+
+red_lower_bound = np.array([0, 80, 130])
 red_upper_bound = np.array([180, 255, 255])
 
-green_lower_bound = np.array([25, 40, 40])
+green_lower_bound = np.array([45, 40, 40])
 green_upper_bound = np.array([105, 255, 255])
 
 pidX = PID(0.005, 0, 0, 0) # Tune these constants
@@ -79,16 +80,16 @@ output_x_array = []
 output_y_array = []
 time_array = []
 
-fig = plt.figure()
-fig2 = plt.figure()
+# fig = plt.figure()
+# fig2 = plt.figure()
 
-ax = fig.add_subplot(1, 1, 1)
+# ax = fig.add_subplot(1, 1, 1)
 
-ax2 = fig2.add_subplot(1, 1, 1)
+# ax2 = fig2.add_subplot(1, 1, 1)
 
 # resize the figures cuz they were too large
-fig.set_size_inches((2, 2))
-fig2.set_size_inches((2, 2))
+# fig.set_size_inches((2, 2))
+# fig2.set_size_inches((2, 2))
 
 plt.ion()
 
@@ -118,8 +119,8 @@ while True:
     red_moment = None
     green_moment = None
 
-    ax.plot(time_array, output_x_array)
-    ax2.plot(time_array, output_y_array)
+    # ax.plot(time_array, output_x_array)
+    # ax2.plot(time_array, output_y_array)
 
     # The read() function returns a tuple that contains a boolean whether the frame was retrieved
     # and something that essentially represents the video frame 
@@ -226,20 +227,20 @@ while True:
             currentState = State.ALIGNING
         
             if not x_aligned and not y_aligned:
-                # direction = "right" if average_x > target[2] else "left"
-                # print("Move " + direction)    
+                direction = "right" if average_x > target[2] else "left"
+                print("Move " + direction)    
                 outputX = -pidX(average_x)
                 outputY = 0
 
             elif not x_aligned:
-                # direction = "right" if average_x > target[2] else "left"
-                # print("Move " + direction)
+                direction = "right" if average_x > target[2] else "left"
+                print("Move " + direction)
                 outputX = -pidX(average_x)
 
 
             elif not y_aligned:
-                # direction = "down" if average_y < target[1] else "up"
-                # print("Move " + direction)
+                direction = "backward" if average_y < target[1] else "forward"
+                print("Move " + direction)
                 outputY = -pidY(average_y)
                 outputX = 0
 
@@ -254,7 +255,7 @@ while True:
     else:
         currentState = State.SEARCHING
 
-    P = np.array([average_x, average_y, 1])
+    P = np.array([average_x, average_y, 1.0])
 
     
     r1 = Ki.dot(P)
@@ -262,6 +263,9 @@ while True:
     cos_theta = (r_optical.dot(r1))/(np.linalg.norm(r_optical)*np.linalg.norm(r1))
 
     optical_axis_angle = np.acos(cos_theta)
+
+    # print(r1)
+    # print(abs(average_x-(width // 2)))
 
     x_aligned = True if (average_x > target[0] and average_x < target[2]) else False
     y_aligned = True if (average_y > target[1] and average_y < target[3]) else False
@@ -279,7 +283,7 @@ while True:
                   (target[2], target[3]), (0, 255, 0), 3)
 
     # update matplotlib graphs
-    plt.pause(0.001)
+    # plt.pause(0.001)
 
     # Show the camera feed
     cv2.imshow("Camera Feed", frame)
@@ -287,14 +291,15 @@ while True:
     cv2.resizeWindow("Camera Feed", width, height)
 
     # Shows the same feed but filters out anything that doesn't match the color
-    # cv2.imshow("Red Mask", blackout)
-    # cv2.imshow("Green Mask", blackout2)
+    cv2.imshow("Red Mask", blackout)
+    cv2.imshow("Green Mask", blackout2)
     
     # If the key pressed by the user is q, break out of the loop
     if cv2.waitKey(1) == ord('q'):
         break
 
 print(f"Exited program at timestamp: {current_time} seconds")
+
 # These two lines of code will release the video capture object and close all of the
 # windows that were previously open
 video_capture.release()
