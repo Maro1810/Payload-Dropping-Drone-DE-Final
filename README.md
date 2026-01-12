@@ -88,7 +88,7 @@ Now that we have defined the forward process of going from camera coordinates to
 
 The reverse process will simply be:
 
-$$\begin{bmatrix}\frac{X}{Z} \\\frac{Y}{Z} \\1\end{bmatrix}=K^{-1}\begin{bmatrix}x \\y \\1\end{bmatrix}$$
+$$\begin{bmatrix}\frac{X}{Z} \\\\ \frac{Y}{Z} \\\\ 1\end{bmatrix}=K^{-1}\begin{bmatrix}x \\\\ y \\\\ 1\end{bmatrix}$$
 
 
 where $K^{-1}$ is the inverse matrix of the camera matrix $K$
@@ -98,6 +98,6 @@ On the drone, we will have a barometer which can tell us the altitude of the dro
 
 $$Z = \text{altitude}$$
 
-$$Z\begin{bmatrix}\frac{X}{Z} \\ \frac{Y}{Z} \\ 1 \end{bmatrix}=\begin{bmatrix} X \\ Y \\ Z \end{bmatrix} $$
+$$Z\cdot\begin{bmatrix} \frac{X}{Z} \\\\ \frac{Y}{Z} \\\\ 1 \end{bmatrix}=\begin{bmatrix} X \\\\ Y \\\\ Z \end{bmatrix} $$
 
-From here, we can determine the norm of the vector $\begin{bmatrix}X \\ Y\end{bmatrix}$, and this will be the horizontal distance.
+From here, we can determine the norm of the vector $\begin{bmatrix} X \\ Y \end{bmatrix}$, and this will be the horizontal distance.
